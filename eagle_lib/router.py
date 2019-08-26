@@ -2,27 +2,26 @@
 import logging
 import importlib
 import os
+from eagle_lib.eagle import EagleInstance
 
-# 根据kwargs 中的action,def 参数 路由请求
-def routeCli(*args,**kwargs):
+def routeCli():
     logging.debug("route request with params : %s ， %s",args,kwargs)
-    eagle_root = kwargs.get("eagle_root")
-    actionName = kwargs.get("action")
-    defName = kwargs.get("def")
-    actionFilePath = "%s/actions/%s.py" % (eagle_root,actionName)
+    actionName = EagleInstance.getCliArg("action")
+    defName = EagleInstance.getCliArg("def")
+    actionFilePath = EagleInstance.actionFilePath(actionName)
     if os.path.isfile(actionFilePath):
         m = importlib.import_module("actions.%s" % (actionName))
         if not hasattr(m,defName):
             logging.error("Action File %s, def Entry %s Does Not Exist.",actionFilePath,defName) 
         else:
             defEntry = getattr(m,defName)
-            defEntry(m,*args,**kwargs)
+            defEntry(m,**EagleInstance.CliArgs)
             print("")
     else:
         logging.error("No Action File Found : %s",actionFilePath)
     
 def actions(*args,**kwargs):
-    actionDir = kwargs.get("eagle_root") + "/actions/"
+    actionDir = EagleInstance.ActionDir
     actionFiles = os.listdir(actionDir)
     returnActions = []
     for action in actionFiles:
